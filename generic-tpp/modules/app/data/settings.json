@@ -1,0 +1,22 @@
+[
+    {
+        "name": "sensor_temp_1",
+        "min": 70,
+        "max": 85
+    },
+    {
+        "name": "sensor_temp_2",
+        "min": 24,
+        "max": 28
+    },
+    {
+        "name": "sensor_power_1",
+        "min": 34,
+        "max": 26
+    },
+    {
+        "name": "sensor_turbine_speed_1",
+        "min": 2999,
+        "max": 3001
+    }
+]

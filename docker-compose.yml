@@ -1,0 +1,339 @@
+version: '3.4'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.2.0
+    container_name: zookeeper
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+    ports:
+     - "2181:2181"
+  broker:
+    image: confluentinc/cp-kafka:7.2.0
+    container_name: broker
+    ports:
+      - "9092:9092"
+    expose:
+     - "29092"
+    depends_on:
+      - zookeeper
+    env_file: ./generic-tpp/modules/broker/config/.env
+
+  monitor:
+    build: ./generic-tpp/modules/monitor
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: monitor
+    environment:
+      - MODULE_NAME=monitor
+    volumes:
+      - ./generic-tpp/shared:/shared
+
+  scada:
+    build: ./generic-tpp/modules/scada
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: scada
+    environment:
+      - MODULE_NAME=scada
+    volumes:
+      - ./generic-tpp/shared:/shared
+    ports:
+      - 8000:8000
+    depends_on:
+      - scada-receiver
+
+  scada-receiver:
+    build: ./generic-tpp/modules/scada-receiver
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: scada-receiver
+    environment:
+      - MODULE_NAME=scada-receiver
+    volumes:
+      - ./generic-tpp/shared:/shared
+    depends_on:
+      - task-scheduler
+    ports:
+      - 8005:8005
+
+  task-scheduler:
+    build: ./generic-tpp/modules/task-scheduler
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: task-scheduler
+    environment:
+      - MODULE_NAME=task-scheduler
+    volumes:
+      - ./generic-tpp/shared:/shared
+    depends_on:
+      - command-block
+
+  authorization-verifier:
+    build: ./generic-tpp/modules/authorization-verifier
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: authorization-verifier
+    environment:
+      - MODULE_NAME=authorization-verifier
+    volumes:
+      - ./generic-tpp/shared:/shared
+    depends_on:
+      - license-verifier
+
+  license-verifier:
+    build: ./generic-tpp/modules/license-verifier
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: license-verifier
+    environment:
+      - MODULE_NAME=license-verifier
+    volumes:
+      - ./generic-tpp/shared:/shared
+    depends_on:
+      - task-scheduler
+
+  command-block:
+    build: ./generic-tpp/modules/command-block
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: command-block
+    environment:
+      - MODULE_NAME=command-block
+    volumes:
+      - ./generic-tpp/shared:/shared
+    depends_on:
+      - scada-sender
+
+  scada-sender:
+    build: ./generic-tpp/modules/scada-sender
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: scada-sender
+    environment:
+      - MODULE_NAME=scada-sender
+    volumes:
+      - ./generic-tpp/shared:/shared
+      
+  turbine:
+    build: ./generic-tpp/modules/turbine
+    entrypoint: venv/bin/python start.py /shared/config.ini
+    container_name: turbine
+    environment:
+      - MODULE_NAME=turbine
+    volumes:
+      - ./generic-tpp/shared:/shared
+    ports:
+      - 8001:8001
+
+  sensors:
+    build: ./generic-tpp/modules/sensors
+    entrypoint: venv/bin/python start.py /shared/config.ini
+    container_name: sensors
+    environment:
+      - MODULE_NAME=sensors
+    volumes:
+      - ./generic-tpp/shared:/shared
+    ports:
+      - 8002:8002
+    depends_on:
+      - data-processor-analog
+
+  data-processor-analog:
+    build: ./generic-tpp/modules/data-processor-analog
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: data-processor-analog
+    environment:
+      - MODULE_NAME=data-processor-analog
+    volumes:
+      - ./generic-tpp/shared:/shared
+    ports:
+      - 8003:8003
+
+  data-processor-discrete:
+    build: ./generic-tpp/modules/data-processor-discrete
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: data-processor-discrete
+    environment:
+      - MODULE_NAME=data-processor-discrete
+    volumes:
+      - ./generic-tpp/shared:/shared
+    ports:
+      - 8004:8004
+
+  data-storage:
+    build: ./generic-tpp/modules/data-storage
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: data-storage
+    environment:
+      - MODULE_NAME=data-storage
+    volumes:
+      - ./generic-tpp/shared:/shared
+      - ./generic-tpp/modules/data-storage/data:/module/data
+
+  app:
+    build: ./generic-tpp/modules/app
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: app
+    environment:
+      - MODULE_NAME=app
+    volumes:
+      - ./generic-tpp/shared:/shared
+      - ./generic-tpp/modules/app/data:/module/data
+  
+  data-verifier:
+    build: ./generic-tpp/modules/data-verifier
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: data-verifier
+    environment:
+      - MODULE_NAME=data-verifier
+    volumes:
+      - ./generic-tpp/shared:/shared
+
+  app-receiver:
+    build: ./generic-tpp/modules/app-receiver
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: app-receiver
+    environment:
+      - MODULE_NAME=app-receiver
+    volumes:
+      - ./generic-tpp/shared:/shared
+    ports:
+      - 8006:8006
+
+  update-manager:
+    build: ./generic-tpp/modules/update-manager
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: update-manager
+    environment:
+      - MODULE_NAME=update-manager
+    volumes:
+      - ./generic-tpp/shared:/shared
+
+  app-storage:
+    build: ./generic-tpp/modules/app-storage
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: app-storage
+    environment:
+      - MODULE_NAME=app-storage
+    volumes:
+      - ./generic-tpp/shared:/shared
+
+  app-verifier:
+    build: ./generic-tpp/modules/app-verifier
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: app-verifier
+    environment:
+      - MODULE_NAME=app-verifier
+    volumes:
+      - ./generic-tpp/shared:/shared
+
+  app-updater:
+    build: ./generic-tpp/modules/app-updater
+    entrypoint: 
+      - bash 
+      - -c 
+      - |
+        echo 'Giving Kafka a bit of time to start up…'
+        sleep 60
+        venv/bin/python start.py /shared/config.ini
+    container_name: app-updater
+    environment:
+      - MODULE_NAME=app-updater
+    volumes:
+      - ./generic-tpp/shared:/shared

@@ -1,0 +1,26 @@
+[
+    {
+        "name": "sensor_temp_1",
+        "is_turbine": true,
+        "min": 70,
+        "max": 80
+    },
+    {
+        "name": "sensor_temp_2",
+        "is_turbine": false,
+        "min": 24,
+        "max": 28
+    },
+    {
+        "name": "sensor_power_1",
+        "is_turbine": true,
+        "min": 14,
+        "max": 26
+    },
+    {
+        "name": "sensor_turbine_speed_1",
+        "is_turbine": true,
+        "min": 2999,
+        "max": 3000
+    }
+]

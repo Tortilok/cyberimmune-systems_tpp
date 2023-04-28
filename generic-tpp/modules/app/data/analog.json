@@ -1,0 +1,1 @@
+{"sensors": [{"is_turbine": true, "name": "sensor_temp_1", "value": 76.88}, {"is_turbine": false, "name": "sensor_temp_2", "value": 27.4}, {"is_turbine": true, "name": "sensor_power_1", "value": 20.77}, {"is_turbine": true, "name": "sensor_turbine_speed_1", "value": 3000.15}], "turbine_status": "running"}
